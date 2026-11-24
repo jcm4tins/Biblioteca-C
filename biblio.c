@@ -217,18 +217,313 @@ void menuCadastro(Livro **livros, Usuario **usuarios, NoArvore **arvore, int *pr
     } while (op != 0);
 }
 
+/* ------------------------------------------------------------------ */
+/* CONSULTA                                                           */
+/* ------------------------------------------------------------------ */
 
+void consultarLivros(Livro *lista) {
+    int op;
+    printf("\n1. Buscar por codigo\n2. Buscar por autor\nOpcao: ");
+    op = lerInt();
 
+    if (op == 1) {
+        printf("Codigo: ");
+        Livro *l = buscarLivroPorId(lista, lerInt());
+        if (l != NULL) imprimirLivro(l);
+        else printf("Livro nao encontrado\n");
+    } else if (op == 2) {
+        char autor[TAM];
+        int achou = 0;                       /* flag: encontrou pelo menos um? */
+        lerString("Autor: ", autor);
+        for (Livro *l = lista; l != NULL; l = l->prox) {
+            if (strcmp(l->autor, autor) == 0) {
+                imprimirLivro(l);
+                achou = 1;
+            }
+        }
+        if (!achou) printf("Livro nao encontrado\n");
+    } else {
+        printf("Opcao invalida.\n");
+    }
+}
 
+void consultarUsuarios(Usuario *lista) {
+    int op;
+    printf("\n1. Buscar por email\n2. Buscar por nome\nOpcao: ");
+    op = lerInt();
 
+    if (op == 1) {
+        char email[TAM];
+        lerString("Email: ", email);
+        Usuario *u = buscarUsuarioPorEmail(lista, email);
+        if (u != NULL) printf("Nome: %s | Email: %s\n", u->nome, u->email);
+        else printf("Usuario nao cadastrado\n");
+    } else if (op == 2) {
+        char nome[TAM];
+        int achou = 0;                       /* nomes podem repetir: lista todos */
+        lerString("Nome: ", nome);
+        for (Usuario *u = lista; u != NULL; u = u->prox) {
+            if (strcmp(u->nome, nome) == 0) {
+                printf("Nome: %s | Email: %s\n", u->nome, u->email);
+                achou = 1;
+            }
+        }
+        if (!achou) printf("Usuario nao cadastrado\n");
+    } else {
+        printf("Opcao invalida.\n");
+    }
+}
 
+/* Mostra os livros que estão em posse de um usuário. */
+void consultarEmprestimos(Livro *lista) {
+    char email[TAM];
+    int achou = 0;
+    lerString("Email do usuario: ", email);
+    for (Livro *l = lista; l != NULL; l = l->prox) {
+        if (l->status == EMPRESTADO && strcmp(l->emailEmprestimo, email) == 0) {
+            imprimirLivro(l);
+            achou = 1;
+        }
+    }
+    if (!achou) printf("Nenhum livro emprestado para esse usuario.\n");
+}
 
+void menuConsulta(Livro *livros, Usuario *usuarios) {
+    int op;
+    do {
+        printf("\n--- CONSULTA ---\n1. Livros\n2. Usuarios\n3. Emprestimos\n0. Voltar\nOpcao: ");
+        op = lerInt();
+        if (op == 1) consultarLivros(livros);
+        else if (op == 2) consultarUsuarios(usuarios);
+        else if (op == 3) consultarEmprestimos(livros);
+        else if (op != 0) printf("Opcao invalida.\n");
+    } while (op != 0);
+}
 
+/* ------------------------------------------------------------------ */
+/* ATUALIZAÇÃO                                                        */
+/* ------------------------------------------------------------------ */
 
+void atualizarLivro(Livro *lista) {
+    printf("Codigo do livro: ");
+    Livro *l = buscarLivroPorId(lista, lerInt());
+    if (l == NULL) {
+        printf("Livro nao encontrado\n");
+        return;
+    }
 
+    printf("O que alterar?\n1. Titulo\n2. Autor\n3. Ano\nOpcao: ");
+    int op = lerInt();
+    /* Não precisa reordenar a lista: ela é ordenada por ID, que não muda. */
+    if (op == 1) lerString("Novo titulo: ", l->titulo);
+    else if (op == 2) lerString("Novo autor: ", l->autor);
+    else if (op == 3) { printf("Novo ano: "); l->ano = lerInt(); }
+    else { printf("Opcao invalida.\n"); return; }
+    printf("Livro atualizado com sucesso!\n");
+}
 
+void atualizarUsuario(Usuario *lista) {
+    char email[TAM];
+    lerString("Email do usuario: ", email);
+    Usuario *u = buscarUsuarioPorEmail(lista, email);
+    if (u == NULL) {
+        printf("Usuario nao cadastrado\n");
+        return;
+    }
+    lerString("Novo nome: ", u->nome);
+    printf("Usuario atualizado com sucesso!\n");
+}
+
+void menuAtualizacao(Livro *livros, Usuario *usuarios) {
+    int op;
+    do {
+        printf("\n--- ATUALIZACAO ---\n1. Livros\n2. Usuarios\n0. Voltar\nOpcao: ");
+        op = lerInt();
+        if (op == 1) atualizarLivro(livros);
+        else if (op == 2) atualizarUsuario(usuarios);
+        else if (op != 0) printf("Opcao invalida.\n");
+    } while (op != 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* EXCLUSÃO                                                           */
+/* ------------------------------------------------------------------ */
+
+/* Remove um livro da lista e libera sua memória. */
+void excluirLivro(Livro **lista) {
+    printf("Codigo do livro: ");
+    int id = lerInt();
+
+    Livro *anterior = NULL;
+    Livro *atual = *lista;
+    while (atual != NULL && atual->id != id) {   /* procura guardando o anterior */
+        anterior = atual;
+        atual = atual->prox;
+    }
+
+    if (atual == NULL) {
+        printf("Exclusao nao realizada: livro nao encontrado.\n");
+        return;
+    }
+    if (atual->status == EMPRESTADO) {           /* evita apagar livro que está na rua */
+        printf("Exclusao nao realizada: o livro esta emprestado.\n");
+        return;
+    }
+
+    if (anterior == NULL) *lista = atual->prox;  /* era o primeiro da lista */
+    else anterior->prox = atual->prox;           /* "pula" o nó removido */
+    free(atual);
+    printf("Livro excluido com sucesso!\n");
+}
+
+/* Remove um usuário (somente se não tiver livros emprestados). */
+void excluirUsuario(Usuario **usuarios, Livro *livros) {
+    char email[TAM];
+    lerString("Email do usuario: ", email);
+
+    Usuario *anterior = NULL;
+    Usuario *atual = *usuarios;
+    while (atual != NULL && strcmp(atual->email, email) != 0) {
+        anterior = atual;
+        atual = atual->prox;
+    }
+
+    if (atual == NULL) {
+        printf("Exclusao nao realizada: usuario nao cadastrado.\n");
+        return;
+    }
+
+    /* Mantém a consistência: não apaga quem ainda deve livros */
+    for (Livro *l = livros; l != NULL; l = l->prox) {
+        if (l->status == EMPRESTADO && strcmp(l->emailEmprestimo, email) == 0) {
+            printf("Exclusao nao realizada: usuario possui livros emprestados.\n");
+            return;
+        }
+    }
+
+    if (anterior == NULL) *usuarios = atual->prox;
+    else anterior->prox = atual->prox;
+    free(atual);
+    printf("Usuario excluido com sucesso!\n");
+}
+
+void menuExclusao(Livro **livros, Usuario **usuarios) {
+    int op;
+    do {
+        printf("\n--- EXCLUSAO ---\n1. Livros\n2. Usuarios\n0. Voltar\nOpcao: ");
+        op = lerInt();
+        if (op == 1) excluirLivro(livros);
+        else if (op == 2) excluirUsuario(usuarios, *livros);
+        else if (op != 0) printf("Opcao invalida.\n");
+    } while (op != 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* EMPRÉSTIMO E DEVOLUÇÃO                                             */
+/* ------------------------------------------------------------------ */
+
+void emprestarLivro(Livro *livros, Usuario *usuarios) {
+    printf("Codigo do livro: ");
+    Livro *l = buscarLivroPorId(livros, lerInt());
+    if (l == NULL) {
+        printf("Livro nao encontrado\n");
+        return;
+    }
+    if (l->status == EMPRESTADO) {
+        printf("Livro indisponivel: ja esta emprestado.\n");
+        return;
+    }
+
+    char email[TAM];
+    lerString("Email do usuario: ", email);
+    if (buscarUsuarioPorEmail(usuarios, email) == NULL) {   /* usuário precisa existir */
+        printf("Usuario nao cadastrado\n");
+        return;
+    }
+
+    l->status = EMPRESTADO;
+    strcpy(l->emailEmprestimo, email);
+    printf("Emprestimo realizado com sucesso!\n");
+}
+
+void devolverLivro(Livro *livros) {
+    printf("Codigo do livro: ");
+    Livro *l = buscarLivroPorId(livros, lerInt());
+    if (l == NULL) {
+        printf("Livro nao encontrado\n");
+        return;
+    }
+    if (l->status != EMPRESTADO) {
+        printf("Este livro nao estava emprestado.\n");
+        return;
+    }
+
+    l->status = DISPONIVEL;
+    l->emailEmprestimo[0] = '\0';   /* limpa o email */
+    printf("Devolucao realizada com sucesso!\n");
+}
+
+/* ------------------------------------------------------------------ */
+/* LIBERAÇÃO DE MEMÓRIA                                               */
+/* ------------------------------------------------------------------ */
+
+void liberarLivros(Livro *lista) {
+    while (lista != NULL) {
+        Livro *proximo = lista->prox;   /* guarda o próximo ANTES de dar free */
+        free(lista);
+        lista = proximo;
+    }
+}
+
+void liberarUsuarios(Usuario *lista) {
+    while (lista != NULL) {
+        Usuario *proximo = lista->prox;
+        free(lista);
+        lista = proximo;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* PROGRAMA PRINCIPAL                                                 */
+/* ------------------------------------------------------------------ */
 
 int main(void) {
+    Livro *livros = NULL;        /* início da lista de livros (vazia) */
+    Usuario *usuarios = NULL;    /* início da lista de usuários (vazia) */
+    NoArvore *arvoreIds = NULL;  /* raiz da árvore binária de IDs (vazia) */
+    int proximoId = 1;           /* contador para gerar IDs sequenciais */
+    int op;
 
-  return 0;
+    do {
+        printf("\n===== BIBLIOTECA =====\n");
+        printf("1. Cadastro\n2. Consulta\n3. Atualizacao\n4. Exclusao\n");
+        printf("5. Emprestimo\n6. Devolucao\n0. Sair\nOpcao: ");
+        op = lerInt();
+
+        switch (op) {
+            case 1: menuCadastro(&livros, &usuarios, &arvoreIds, &proximoId); break;
+            case 2: menuConsulta(livros, usuarios); break;
+            case 3: menuAtualizacao(livros, usuarios); break;
+            case 4: menuExclusao(&livros, &usuarios); break;
+            case 5: emprestarLivro(livros, usuarios); break;
+            case 6: devolverLivro(livros); break;
+            case 0: printf("Encerrando...\n"); break;
+            default: printf("Opcao invalida.\n");
+        }
+    } while (op != 0);
+
+    /* Ao sair, libera toda a memória alocada dinamicamente */
+    liberarLivros(livros);
+    liberarUsuarios(usuarios);
+    liberarArvore(arvoreIds);
+    return 0;
 }
+
+
+
+
+
+
+
+
+
