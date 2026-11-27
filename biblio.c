@@ -1,5 +1,3 @@
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,9 +6,9 @@
 #define DISPONIVEL 0     /* status do livro: 0 = disponível */
 #define EMPRESTADO 1     /* status do livro: 1 = emprestado */
 
-/* ------------------------------------------------------------------ */
+
 /* ESTRUTURAS DE DADOS                                                */
-/* ------------------------------------------------------------------ */
+
 
 /* Nó da lista de usuários */
 typedef struct Usuario {
@@ -38,9 +36,9 @@ typedef struct NoArvore {
     struct NoArvore *dir;      /* subárvore com IDs maiores */
 } NoArvore;
 
-/* ------------------------------------------------------------------ */
+
 /* FUNÇÕES AUXILIARES DE ENTRADA                                      */
-/* ------------------------------------------------------------------ */
+
 
 /* Lê um inteiro com segurança: se o usuário digitar letras, pede de novo. */
 int lerInt(void) {
@@ -59,9 +57,8 @@ void lerString(const char *mensagem, char *destino) {
     scanf("%99s", destino);   /* 99 = TAM - 1 (reserva espaço para o '\0') */
 }
 
-/* ------------------------------------------------------------------ */
+
 /* FUNÇÕES DE BUSCA                                                   */
-/* ------------------------------------------------------------------ */
 
 /* ----- Árvore binária de IDs (EXTRA) -----
    Obs.: quando um livro é excluído, seu ID continua na árvore. Assim, um código
@@ -133,9 +130,7 @@ void imprimirLivro(Livro *l) {
     printf("\n");
 }
 
-/* ------------------------------------------------------------------ */
 /* CADASTRO                                                           */
-/* ------------------------------------------------------------------ */
 
 /* Insere o livro na posição correta para manter a lista ordenada por ID. */
 void inserirLivroOrdenado(Livro **lista, Livro *novo) {
@@ -217,9 +212,7 @@ void menuCadastro(Livro **livros, Usuario **usuarios, NoArvore **arvore, int *pr
     } while (op != 0);
 }
 
-/* ------------------------------------------------------------------ */
 /* CONSULTA                                                           */
-/* ------------------------------------------------------------------ */
 
 void consultarLivros(Livro *lista) {
     int op;
@@ -300,9 +293,7 @@ void menuConsulta(Livro *livros, Usuario *usuarios) {
     } while (op != 0);
 }
 
-/* ------------------------------------------------------------------ */
 /* ATUALIZAÇÃO                                                        */
-/* ------------------------------------------------------------------ */
 
 void atualizarLivro(Livro *lista) {
     printf("Codigo do livro: ");
@@ -345,9 +336,7 @@ void menuAtualizacao(Livro *livros, Usuario *usuarios) {
     } while (op != 0);
 }
 
-/* ------------------------------------------------------------------ */
 /* EXCLUSÃO                                                           */
-/* ------------------------------------------------------------------ */
 
 /* Remove um livro da lista e libera sua memória. */
 void excluirLivro(Livro **lista) {
@@ -418,9 +407,7 @@ void menuExclusao(Livro **livros, Usuario **usuarios) {
     } while (op != 0);
 }
 
-/* ------------------------------------------------------------------ */
 /* EMPRÉSTIMO E DEVOLUÇÃO                                             */
-/* ------------------------------------------------------------------ */
 
 void emprestarLivro(Livro *livros, Usuario *usuarios) {
     printf("Codigo do livro: ");
@@ -463,9 +450,7 @@ void devolverLivro(Livro *livros) {
     printf("Devolucao realizada com sucesso!\n");
 }
 
-/* ------------------------------------------------------------------ */
 /* LIBERAÇÃO DE MEMÓRIA                                               */
-/* ------------------------------------------------------------------ */
 
 void liberarLivros(Livro *lista) {
     while (lista != NULL) {
@@ -483,9 +468,7 @@ void liberarUsuarios(Usuario *lista) {
     }
 }
 
-/* ------------------------------------------------------------------ */
 /* PROGRAMA PRINCIPAL                                                 */
-/* ------------------------------------------------------------------ */
 
 int main(void) {
     Livro *livros = NULL;        /* início da lista de livros (vazia) */
