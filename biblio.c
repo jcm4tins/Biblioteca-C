@@ -19,7 +19,7 @@ typedef struct Usuario {
 
 /* Nó da lista de livros */
 typedef struct Livro {
-    int id;   (sequencial) 
+    int id;
     char titulo[TAM];
     char autor[TAM];
     int ano;
